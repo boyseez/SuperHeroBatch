@@ -6,5 +6,5 @@ Esercizio SpringBatch
 Spiegazione del databse e diagramma ER si trova a [questo indirizzo](https://www.databasestar.com/sample-database-superheroes/)
 
 
-##JOB
+## Diagramma di flosso per il JOB
 <img src="diagram.svg">
