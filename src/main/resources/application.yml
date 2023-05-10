@@ -15,3 +15,13 @@ spring:
   batch:
     jdbc:
       initialize-schema: always
+
+#parametri file
+file:
+  nome:
+    csv:
+      deceduti: bollettino_di_guerra_del_{data}.csv
+      rinascite: eroi_rinati_il_{data}.csv
+    json: missione_del_{data}.json
+  intestazione:
+    csv: id_eroe,nome_erore,lista_poteri,nome_evento,data_evento
