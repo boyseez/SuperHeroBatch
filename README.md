@@ -7,4 +7,6 @@ Spiegazione del databse e diagramma ER si trova a [questo indirizzo](https://www
 
 
 ## Diagramma di flosso per il JOB
+<p align="center">
 <img src="diagram.svg">
+</p>
