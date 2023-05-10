@@ -1,4 +1,4 @@
 # SuperHeroBatch
 Esercizio SpringBatch
 
-[SITO DATABSE](https://www.databasestar.com/sample-data-sql/)
+[SITO DATABASE](https://www.databasestar.com/sample-data-sql/)
