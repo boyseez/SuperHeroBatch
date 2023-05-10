@@ -1,32 +1,40 @@
 package it.esempio.superherobatch.mapper;
 
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 import lombok.Builder;
 import lombok.Data;
+import org.springframework.stereotype.Repository;
 
 import java.util.Arrays;
 import java.util.List;
 
 @Data
-@Builder
+
+@Entity
 public class SuperHeroDTO {
     private String supereroe;
     private String nomeCompleto;
     private String editore;
     private String listaSuperpoteri;
+    @Id
+    private Long id;
+
+    public SuperHeroDTO() {
+
+    }
 
     public List<String> getListaPoteri(){
         return Arrays.asList(listaSuperpoteri.split(","));
     }
 
-    public static void main(String[] args) {
-        SuperHeroDTO test = SuperHeroDTO.builder()
-                .supereroe("Loki")
-                .nomeCompleto("Loki Laufeyson")
-                .editore("Marvel Comics")
-                .listaSuperpoteri("Accelerated Healing,Durability,Energy Beams,Flight,Intelligence,Longevity,Magic,Omnilingualism,Portal Creation,Psionic Powers,Shapeshifting,Stamina,Super Strength,Toxin and Disease Resistance")
-                .build();
-        test.getListaPoteri()
-                .stream().forEach(System.out::println);
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getId() {
+        return id;
     }
 }
