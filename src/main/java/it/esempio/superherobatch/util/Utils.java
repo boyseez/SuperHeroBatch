@@ -32,11 +32,14 @@ public class Utils {
         List<Missione> listaMissioni= new ArrayList<>();
         Random r = new Random();
         for (int i = 0; i < numMission; i++) {
-            String eroe = LISTA_EROI.get(r.nextInt(LISTA_EROI.size()));
+            Integer numeroRandom=r.nextInt(LISTA_EROI.size()-1);
+
+            String eroe = LISTA_EROI.get(numeroRandom);
 
             listaMissioni.add(Missione.builder()
                                 .dettMissione(TESTO_DI_PROVA + eroe)
                                 .nomeEroe(eroe)
+                                .mortoEroe(numeroRandom % 2 == 0 )
                                 .build());
         }
         return listaMissioni;

@@ -13,15 +13,16 @@ import java.util.Iterator;
 @Slf4j
 public class ReaderMissione implements ItemReader<Missione> {
     private Missione s = null;
-
     private String her;
     private String dett;
     private String data;
+    private Boolean decesso;
 
-    public ReaderMissione(String hero, String dett, String data) {
+    public ReaderMissione(String hero, String dett, String data,Boolean decesso) {
         this.her = hero;
         this.dett = dett;
         this.data = data;
+        this.decesso=decesso;
     }
 
     @Override
@@ -30,6 +31,7 @@ public class ReaderMissione implements ItemReader<Missione> {
                 .nomeEroe(her)
                 .dettMissione(dett)
                 .data(data)
+                .mortoEroe(decesso)
                 .build();
         if (s!=null && s.equals(mission)) {
             return null;

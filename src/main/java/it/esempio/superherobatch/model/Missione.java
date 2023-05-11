@@ -11,10 +11,13 @@ public class Missione {
     public static final String KEY_NOME_EROE="nome_eroe";
     public static final String KEY_DETT_MISSIONE="dett_missione";
     public static final String KEY_DATA="data";
+    public static final String KEY_DECESSO="decesso";
 
     private String nomeEroe;
     private String dettMissione;
     private String data;
+    private Boolean mortoEroe;
+
 
 
 }

@@ -43,6 +43,7 @@ public class SuperHeroBatchApplication {
         parametersBuilder.addString(Missione.KEY_NOME_EROE,m.getNomeEroe());
         parametersBuilder.addString(Missione.KEY_DETT_MISSIONE,m.getDettMissione());
         parametersBuilder.addDate(Missione.KEY_DATA, new Date());
+        parametersBuilder.addString(Missione.KEY_DECESSO, m.getMortoEroe().toString());
 
         this.jobLauncher.run(job,parametersBuilder.toJobParameters());
 
