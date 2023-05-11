@@ -1,5 +1,6 @@
 package it.esempio.superherobatch.configuration;
 
+import it.esempio.superherobatch.decider.DecessoDecider;
 import it.esempio.superherobatch.model.Missione;
 import it.esempio.superherobatch.reader.ReaderMissione;
 import it.esempio.superherobatch.util.Utils;
@@ -14,9 +15,9 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.FlowBuilder;
 import org.springframework.batch.core.job.flow.Flow;
+import org.springframework.batch.core.job.flow.JobExecutionDecider;
 import org.springframework.batch.core.job.flow.support.SimpleFlow;
 import org.springframework.batch.item.ItemReader;
-import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -25,7 +26,6 @@ import org.springframework.context.annotation.Configuration;
 import javax.sql.DataSource;
 import java.time.ZoneId;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 
 @Configuration
@@ -98,9 +98,7 @@ public class HeroBatchConfiguration {
                         log.debug("|                                 PARAMETRI JOB                                    |");
                         log.debug("------------------------------------------------------------------------------------");
                         log.debug("Lista Parametri ");
-                        jobExecution.getJobParameters().getParameters().keySet().forEach(item->{
-                            log.debug("Chiave ="+item + ", Valore: "+jobExecution.getJobParameters().getParameters().get(item));
-                        }
+                        jobExecution.getJobParameters().getParameters().keySet().forEach(item-> log.debug("Chiave ="+item + ", Valore: "+jobExecution.getJobParameters().getParameters().get(item))
                         );
                         log.debug("------------------------------------------------------------------------------------");
                         log.debug("------------------------------------------------------------------------------------");
@@ -115,29 +113,50 @@ public class HeroBatchConfiguration {
     }
 
 
+    @Bean
+    public JobExecutionDecider decessoDecider(@Value("#{jobParameters['decesso']}") String decesso) {
+        return new DecessoDecider(decesso);
+    }
 
 
     //TODO STEP
     //***********************************  STEP  **********************************************
     @Bean
     public Flow flowHeroes() {
+
+        // TODO implementare flussi paralleli tra e' morto qualcuno ed e' un
+        // TODO super eroe marvel
         return new FlowBuilder<SimpleFlow>(FLOW_NAME)
                 .start(saveOnDbMySql())
+                .on("*")
+                    .to(decessoDecider(null)).on(DecessoDecider.DECEDUTO).to(esportaFileCVSDeceduti())
+                    .from(decessoDecider(null)).on(DecessoDecider.NESSUN_DECESSO).to(esportaFileJsonMissione())
                 .build();
     }
+
+    @Bean
+    public Step esportaFileJsonMissione() {
+        //TODO implementare exp JsonMIssione
+        return null;
+    }
+
+    @Bean
+    public Step esportaFileCVSDeceduti() {
+        //TODO implementare exp esportaFileCVSDeceduti
+        return null;
+    }
+
+
 
     @Bean
     public Step saveOnDbMySql() {
         return stepBuilderFactory.get(NOME_STEP_SALVA_DB)
                 .<Missione,Missione>chunk(chunk_size)
                 .reader(leggiParametriReader(null,null, null,null))
-                .writer(new ItemWriter<Missione>() {
-                    @Override
-                    public void write(List<? extends Missione> items) throws Exception {
-                        log.debug("==================WRITER==================");
-                        for (int i = 0; i < items.size(); i++) {
-                            log.debug(">>>>Elemento "+i+": "+items);
-                        }
+                .writer(items -> {
+                    log.debug("==================WRITER==================");
+                    for (int i = 0; i < items.size(); i++) {
+                        log.debug(">>>>Elemento "+i+": "+items);
                     }
                 })
                 .build();
