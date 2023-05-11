@@ -19,7 +19,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import javax.sql.DataSource;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Arrays;
+import java.util.Objects;
 
 @Configuration
 @Slf4j
@@ -62,12 +65,16 @@ public class HeroBatchConfiguration {
     public Job jobHeroes(){
         return this.jobBuilderFactory
                 .get(NOME_JOB)
-                .incrementer(new RunIdIncrementer())
                 .start(stepInit())
                 .listener(new JobExecutionListener() {
                     @Override
                     public void beforeJob(JobExecution jobExecution) {
-                        String data = Utils.getDataFormattata();
+                        String data =Utils.getDataFormattata(Objects.requireNonNull(jobExecution
+                                            .getJobParameters()
+                                            .getDate(Missione.KEY_DATA))
+                                    .toInstant()
+                                    .atZone(ZoneId.systemDefault())
+                                    .toLocalDateTime());
 
                         nomeCvsDeceduti = StringUtils.replace(nomeCvsDeceduti,PLACEHOLDER,data);
                         nomeCvsRinascite = StringUtils.replace(nomeCvsRinascite,PLACEHOLDER,data);
@@ -85,7 +92,7 @@ public class HeroBatchConfiguration {
                         log.debug("|                                 PARAMETRI JOB                                    |");
                         log.debug("------------------------------------------------------------------------------------");
                         log.debug("Lista Parametri ");
-                        jobExecution.getJobParameters().getParameters().keySet().stream().forEach(item->{
+                        jobExecution.getJobParameters().getParameters().keySet().forEach(item->{
                             log.debug("Chiave ="+item + ", Valore: "+jobExecution.getJobParameters().getParameters().get(item));
                         }
                         );
@@ -97,6 +104,9 @@ public class HeroBatchConfiguration {
 
                     @Override
                     public void afterJob(JobExecution jobExecution) {
+                        log.debug("*******************************     FINE JOB     ************************************");
+
+
 
                     }
                 })

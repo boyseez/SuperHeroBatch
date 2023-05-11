@@ -35,7 +35,7 @@ public class Utils {
             String eroe = LISTA_EROI.get(r.nextInt(LISTA_EROI.size()));
 
             listaMissioni.add(Missione.builder()
-                                .dettMIssione(TESTO_DI_PROVA + eroe)
+                                .dettMissione(TESTO_DI_PROVA + eroe)
                                 .nomeEroe(eroe)
                                 .build());
         }
@@ -43,9 +43,13 @@ public class Utils {
 
     }
 
-
     public static String getDataFormattata(){
-        LocalDateTime oggi = LocalDateTime.now();
+        return getDataFormattata(LocalDateTime.now());
+    }
+
+
+    public static String getDataFormattata(LocalDateTime oggi){
+
         DateTimeFormatter dateTimeFormatter=  DateTimeFormatter.ofPattern("dd_MM_yyyy_H_m_s");
         return dateTimeFormatter.format(oggi);
     }
