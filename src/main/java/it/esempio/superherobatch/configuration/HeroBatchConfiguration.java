@@ -11,15 +11,20 @@ import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
-import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.core.job.builder.FlowBuilder;
+import org.springframework.batch.core.job.flow.Flow;
+import org.springframework.batch.core.job.flow.support.SimpleFlow;
 import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.item.NonTransientResourceException;
+import org.springframework.batch.item.ParseException;
+import org.springframework.batch.item.UnexpectedInputException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import javax.sql.DataSource;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Objects;
@@ -32,6 +37,7 @@ public class HeroBatchConfiguration {
     private static final String NOME_STEP_SALVA_DB = "Step_Salva_Su_DB_MySQL";
     private final static String NOME_JOB="Job Heroes Tracking";
     private static final String PLACEHOLDER = "{data}";
+    private static final String FLOW_NAME = "HeroFlow";
 
     @Value("${chunk.size}")
     private Integer chunk_size;
@@ -65,7 +71,8 @@ public class HeroBatchConfiguration {
     public Job jobHeroes(){
         return this.jobBuilderFactory
                 .get(NOME_JOB)
-                .start(stepInit())
+                .start(flowHeroes())
+                .end()
                 .listener(new JobExecutionListener() {
                     @Override
                     public void beforeJob(JobExecution jobExecution) {
@@ -110,28 +117,41 @@ public class HeroBatchConfiguration {
 
 
 
+
     //TODO STEP
     //***********************************  STEP  **********************************************
     @Bean
-    public Step stepInit(){
-        return this.stepBuilderFactory
-                .get(NOME_STEP_SALVA_DB)
+    public Flow flowHeroes() {
+        return new FlowBuilder<SimpleFlow>(FLOW_NAME)
+                .start(saveOnDbMySql())
+                .build();
+    }
+
+    @Bean
+    public Step saveOnDbMySql() {
+        return stepBuilderFactory.get(NOME_STEP_SALVA_DB)
                 .<Missione,Missione>chunk(chunk_size)
-                .reader( readerMissione() )
-                .writer( i  -> {
-                    log.info("Elemento: "+i);
+                .reader(leggiParametriReader(null,null, null))
+                .writer(items -> {
+                    log.info("Elemento: "+items);
                 })
                 .build();
     }
 
 
 
+
     //TODO READER
     //************************************  READER  ********************************************
-    private ItemReader<Missione> readerMissione() {
-        return new ReaderMissione();
-    }
+    @Bean
+    @StepScope
+    public ItemReader<Missione> leggiParametriReader(@Value("#{jobParameters['nome_eroe']}") String hero,
+                                                     @Value("#{jobParameters['dett_missione']}") String dett,
+                                                     @Value("#{jobParameters['data']}") String data) {
 
+        return new ReaderMissione(hero,dett,data);
+
+    }
 
     //TODO PROCESSING
     //************************************  PROCESSING  ****************************************

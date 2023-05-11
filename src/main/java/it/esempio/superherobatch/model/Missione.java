@@ -3,6 +3,8 @@ package it.esempio.superherobatch.model;
 import lombok.Builder;
 import lombok.*;
 
+import java.util.Objects;
+
 @Data
 @Builder
 public class Missione {
@@ -12,5 +14,7 @@ public class Missione {
 
     private String nomeEroe;
     private String dettMissione;
+    private String data;
+
 
 }

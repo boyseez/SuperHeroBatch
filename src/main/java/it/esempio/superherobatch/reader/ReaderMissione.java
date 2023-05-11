@@ -12,13 +12,32 @@ import java.util.Iterator;
 
 @Slf4j
 public class ReaderMissione implements ItemReader<Missione> {
+    private Missione s = null;
 
-    public static final Iterator ITERATOR = Utils.generatoreDiMissione(10).iterator();
+    private String her;
+    private String dett;
+    private String data;
 
-
+    public ReaderMissione(String hero, String dett, String data) {
+        this.her = hero;
+        this.dett = dett;
+        this.data = data;
+    }
 
     @Override
     public Missione read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
-        return ITERATOR.hasNext() ? (Missione) ITERATOR.next() : null;
+        Missione mission = Missione.builder()
+                .nomeEroe(her)
+                .dettMissione(dett)
+                .data(data)
+                .build();
+        if (s!=null && s.equals(mission)) {
+            return null;
+        } else {
+            s = mission;
+            return s;
+        }
     }
+
+
 }

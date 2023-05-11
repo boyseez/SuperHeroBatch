@@ -29,4 +29,4 @@ file:
     csv: id_eroe,nome_erore,lista_poteri,nome_evento,data_evento
 
 chunk:
-  size: 3
+  size: 1
