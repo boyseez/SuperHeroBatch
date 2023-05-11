@@ -1,4 +1,6 @@
 spring:
+  batch:
+      initialize-schema: always
   datasource:
     driverClassName: com.mysql.jdbc.Driver
     url: jdbc:mysql://localhost:3306/superhero?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC
@@ -12,10 +14,10 @@ spring:
   sql:
     init:
       platform: mysql
-  batch:
-    jdbc:
-      initialize-schema: always
 
+logging:
+  level:
+    it: debug
 #parametri file
 file:
   nome:
@@ -25,3 +27,6 @@ file:
     json: missione_del_{data}.json
   intestazione:
     csv: id_eroe,nome_erore,lista_poteri,nome_evento,data_evento
+
+chunk:
+  size: 3

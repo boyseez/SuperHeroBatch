@@ -1,31 +1,29 @@
 package it.esempio.superherobatch;
 
-import it.esempio.superherobatch.mapper.SuperHeroDTO;
+import it.esempio.superherobatch.configuration.HeroBatchConfiguration;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.CommandLineRunner;
+import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
+import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 
-import java.util.List;
+import java.util.Date;
 
 @SpringBootApplication
 @Slf4j
+@EnableBatchProcessing
 public class SuperHeroBatchApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(SuperHeroBatchApplication.class, args);
     }
 
-    
-  /*  @Bean
-    public CommandLineRunner demo(SpringApplication repo) {
-        return (args) -> {
-            for (int i = 0; i < 100; i++) {
-                log.info("******************************************");
-            }
-        };
-    }*/
+    @Autowired
+    public JobLauncher jobLauncher;
+
 
 }
