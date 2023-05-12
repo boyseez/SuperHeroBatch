@@ -149,7 +149,9 @@ public class HeroBatchConfiguration {
 
 
     @Bean
-    public Step saveOnDbMySql() {
+    public Step saveOnDbMySql(
+    //ItemReader<Missione> leggiParametriReader
+    ) {
         return stepBuilderFactory.get(NOME_STEP_SALVA_DB)
                 .<Missione,Missione>chunk(chunk_size)
                 .reader(leggiParametriReader(null,null, null,null))
