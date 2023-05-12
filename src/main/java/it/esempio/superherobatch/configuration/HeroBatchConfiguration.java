@@ -6,11 +6,9 @@ import it.esempio.superherobatch.reader.ReaderMissione;
 import it.esempio.superherobatch.util.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.JobExecutionListener;
-import org.springframework.batch.core.Step;
+import org.springframework.batch.core.*;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
+import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.FlowBuilder;
@@ -18,10 +16,19 @@ import org.springframework.batch.core.job.flow.Flow;
 import org.springframework.batch.core.job.flow.JobExecutionDecider;
 import org.springframework.batch.core.job.flow.support.SimpleFlow;
 import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
+import org.springframework.batch.item.file.FlatFileItemWriter;
+import org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor;
+import org.springframework.batch.item.file.transform.DelimitedLineAggregator;
+import org.springframework.batch.item.json.JacksonJsonObjectMarshaller;
+import org.springframework.batch.item.json.JsonFileItemWriter;
+import org.springframework.batch.item.json.builder.JsonFileItemWriterBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.FileSystemResource;
 
 import javax.sql.DataSource;
 import java.time.ZoneId;
@@ -33,10 +40,11 @@ import java.util.Objects;
 public class HeroBatchConfiguration {
 
 
-    private static final String NOME_STEP_SALVA_DB = "Step_Salva_Su_DB_MySQL";
+    private static final String STEP_SALVA_DB = "Step_Salva_Su_DB_MySQL";
     private final static String NOME_JOB="Job Heroes Tracking";
     private static final String PLACEHOLDER = "{data}";
-    private static final String FLOW_NAME = "HeroFlow";
+    private static final String FLOW_hero = "HeroFlow";
+    private static final String INSERT_MISSION ="INSERT INTO elenco_missioni(nome_eroe,dettagli_missione,data_missione,decesso)VALUES(:nomeEroe,:dettMissione,:data,:mortoEroe);" ;
 
     @Value("${chunk.size}")
     private Integer chunk_size;
@@ -62,6 +70,8 @@ public class HeroBatchConfiguration {
 
     @Autowired
     public DataSource dataSource;
+    @Value("${file.path.generati}")
+    private String path_file_generati;
 
 
     //TODO JOB
@@ -70,8 +80,9 @@ public class HeroBatchConfiguration {
     public Job jobHeroes(){
         return this.jobBuilderFactory
                 .get(NOME_JOB)
-                .start(flowHeroes())
-                .end()
+                .start(saveOnDbMySql())
+                .next(saveOnJson())
+                .next(saveOnCvs())
                 .listener(new JobExecutionListener() {
                     @Override
                     public void beforeJob(JobExecution jobExecution) {
@@ -113,7 +124,10 @@ public class HeroBatchConfiguration {
     }
 
 
+
+
     @Bean
+    @JobScope
     public JobExecutionDecider decessoDecider(@Value("#{jobParameters['decesso']}") String decesso) {
         return new DecessoDecider(decesso);
     }
@@ -122,12 +136,10 @@ public class HeroBatchConfiguration {
     //TODO STEP
     //***********************************  STEP  **********************************************
     @Bean
-    public Flow flowHeroes() {
+    public Flow decedutoFlow() {
 
-        // TODO implementare flussi paralleli tra e' morto qualcuno ed e' un
-        // TODO super eroe marvel
-        return new FlowBuilder<SimpleFlow>(FLOW_NAME)
-                .start(saveOnDbMySql())
+        return new FlowBuilder<SimpleFlow>(FLOW_hero)
+                .start(decessoDecider(null))
                 .on("*")
                     .to(decessoDecider(null)).on(DecessoDecider.DECEDUTO).to(esportaFileCVSDeceduti())
                     .from(decessoDecider(null)).on(DecessoDecider.NESSUN_DECESSO).to(esportaFileJsonMissione())
@@ -136,14 +148,26 @@ public class HeroBatchConfiguration {
 
     @Bean
     public Step esportaFileJsonMissione() {
-        //TODO implementare exp JsonMIssione
-        return null;
+        //todo implementare step json
+         return stepBuilderFactory.get("DAIMPLEMENTARE_JSON")
+                .<Missione,Missione>chunk(chunk_size)
+                .reader(leggiParametriReader(null,null, null,null))
+                .writer(items -> {
+                    log.debug("Items "+items);
+                })
+                .build();
     }
 
     @Bean
     public Step esportaFileCVSDeceduti() {
-        //TODO implementare exp esportaFileCVSDeceduti
-        return null;
+        //todo implementare step cvs
+        return stepBuilderFactory.get("DAIMPLEMENTARE_CVS")
+                .<Missione,Missione>chunk(chunk_size)
+                .reader(leggiParametriReader(null,null, null,null))
+                .writer(items -> {
+                    log.debug("Items "+items);
+                })
+                .build();
     }
 
 
@@ -152,18 +176,34 @@ public class HeroBatchConfiguration {
     public Step saveOnDbMySql(
     //ItemReader<Missione> leggiParametriReader
     ) {
-        return stepBuilderFactory.get(NOME_STEP_SALVA_DB)
+        return stepBuilderFactory.get(STEP_SALVA_DB)
                 .<Missione,Missione>chunk(chunk_size)
                 .reader(leggiParametriReader(null,null, null,null))
-                .writer(items -> {
-                    log.debug("==================WRITER==================");
-                    for (int i = 0; i < items.size(); i++) {
-                        log.debug(">>>>Elemento "+i+": "+items);
-                    }
-                })
+                .writer(writeOnMySqlWriter())
                 .build();
     }
 
+    @Bean
+    public Step saveOnJson(
+            //ItemReader<Missione> leggiParametriReader
+    ) {
+        return stepBuilderFactory.get(STEP_SALVA_DB)
+                .<Missione,Missione>chunk(chunk_size)
+                .reader(leggiParametriReader(null,null, null,null))
+                .writer(writeJSONWriter())
+                .build();
+    }
+
+    @Bean
+    public Step saveOnCvs(
+            //ItemReader<Missione> leggiParametriReader
+    ) {
+        return stepBuilderFactory.get(STEP_SALVA_DB)
+                .<Missione,Missione>chunk(chunk_size)
+                .reader(leggiParametriReader(null,null, null,null))
+                .writer(writeCVSWriter())
+                .build();
+    }
 
 
 
@@ -187,8 +227,60 @@ public class HeroBatchConfiguration {
 
     //TODO WRITER
     //************************************  WRITER  ********************************************
+    @Bean
+    public ItemWriter<Missione> writeOnMySqlWriter() {
+        return new JdbcBatchItemWriterBuilder<Missione>()
+                .dataSource(dataSource)
+                .sql(INSERT_MISSION)
+                .beanMapped()
+                .build();
+    }
+
+    @Bean
+    public ItemWriter<Missione> writeJSONWriter() {
+        return new JsonFileItemWriterBuilder<Missione>()
+                .jsonObjectMarshaller(new JacksonJsonObjectMarshaller<>())
+                .resource(new FileSystemResource(path_file_generati+StringUtils.replace(this.nomeJsonMissione,PLACEHOLDER,Utils.getDataFormattata())))
+                .name("Missioni")
+                .lineSeparator(JsonFileItemWriter.DEFAULT_LINE_SEPARATOR)
+                .encoding(JsonFileItemWriter.DEFAULT_CHARSET)
+                .append(true)
+                .build();
+    }
+
+    @Bean
+    public ItemWriter<Missione> writeCVSWriter() {
+        FlatFileItemWriter<Missione> itemWriter= new FlatFileItemWriter<>();
+        String[] fieldName = {     "nomeEroe","dettMissione","data","mortoEroe"};
+
+        itemWriter.setHeaderCallback(writer -> {
+            StringBuilder stringBuilder= new StringBuilder();
+            for (int i = 0; i < fieldName.length; i++) {
+                stringBuilder.append(fieldName[i]);
+
+                if( i < fieldName.length-1 ){
+                    stringBuilder.append(',') ;
+                }
+            }
+            writer.write(stringBuilder.toString());
+        });
+        FileSystemResource res = new FileSystemResource(path_file_generati+StringUtils.replace(this.nomeCvsDeceduti,PLACEHOLDER,Utils.getDataFormattata()));
+        itemWriter.setResource(res);
+
+        DelimitedLineAggregator<Missione> aggregator= new DelimitedLineAggregator<>();
+        aggregator.setDelimiter(",");
 
 
+        BeanWrapperFieldExtractor<Missione> extractor= new BeanWrapperFieldExtractor<>();
 
+        extractor.setNames(fieldName);
+
+        aggregator.setFieldExtractor(extractor);
+
+        itemWriter.setLineAggregator(aggregator);
+        itemWriter.setAppendAllowed(true);
+        return itemWriter;
+
+    }
 
 }
