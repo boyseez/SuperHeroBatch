@@ -45,7 +45,8 @@ public class HeroBatchConfiguration {
     private static final String PLACEHOLDER = "{data}";
     private static final String FLOW_hero = "HeroFlow";
     private static final String INSERT_MISSION ="INSERT INTO elenco_missioni(nome_eroe,dettagli_missione,data_missione,decesso)VALUES(:nomeEroe,:dettMissione,:data,:mortoEroe);" ;
-
+    private static final String STEP_SALVA_JSON ="Step_Salva_su_JSON" ;
+    private static final String STEP_SALVA_CVS ="Step_Salva_su_CVS" ;
     @Value("${chunk.size}")
     private Integer chunk_size;
 
@@ -75,15 +76,13 @@ public class HeroBatchConfiguration {
     private String path_file_generati;
 
 
-    //TODO JOB
-    //************************************  JOB  ***********************************************
+
+    //  JOB
     @Bean
     public Job jobHeroes(){
         return this.jobBuilderFactory
                 .get(NOME_JOB)
-                .start(saveOnDbMySql())
-                .next(saveOnJson())
-                .next(saveOnCvs())
+                .start(decedutoFlow()).end()
                 .listener(new JobExecutionListener() {
                     @Override
                     public void beforeJob(JobExecution jobExecution) {
@@ -134,40 +133,14 @@ public class HeroBatchConfiguration {
     }
 
 
-    //TODO STEP
-    //***********************************  STEP  **********************************************
+    // STEP
     @Bean
     public Flow decedutoFlow() {
 
         return new FlowBuilder<SimpleFlow>(FLOW_hero)
-                .start(decessoDecider(null))
-                .on("*")
-                    .to(decessoDecider(null)).on(DecessoDecider.DECEDUTO).to(esportaFileCVSDeceduti())
-                    .from(decessoDecider(null)).on(DecessoDecider.NESSUN_DECESSO).to(esportaFileJsonMissione())
-                .build();
-    }
-
-    @Bean
-    public Step esportaFileJsonMissione() {
-        //todo implementare step json
-         return stepBuilderFactory.get("DAIMPLEMENTARE_JSON")
-                .<Missione,Missione>chunk(chunk_size)
-                .reader(leggiParametriReader(null,null, null,null))
-                .writer(items -> {
-                    log.debug("Items "+items);
-                })
-                .build();
-    }
-
-    @Bean
-    public Step esportaFileCVSDeceduti() {
-        //todo implementare step cvs
-        return stepBuilderFactory.get("DAIMPLEMENTARE_CVS")
-                .<Missione,Missione>chunk(chunk_size)
-                .reader(leggiParametriReader(null,null, null,null))
-                .writer(items -> {
-                    log.debug("Items "+items);
-                })
+                .start(saveOnDbMySql())
+                .next(decessoDecider(null)).on(DecessoDecider.DECEDUTO).to(saveOnCvs())
+                .from(decessoDecider(null)).on(DecessoDecider.NESSUN_DECESSO).to(saveOnJson())
                 .build();
     }
 
@@ -188,7 +161,7 @@ public class HeroBatchConfiguration {
     public Step saveOnJson(
             //ItemReader<Missione> leggiParametriReader
     ) {
-        return stepBuilderFactory.get(STEP_SALVA_DB)
+        return stepBuilderFactory.get(STEP_SALVA_JSON)
                 .<Missione,Missione>chunk(chunk_size)
                 .reader(leggiParametriReader(null,null, null,null))
                 .writer(writeJSONWriter())
@@ -199,7 +172,7 @@ public class HeroBatchConfiguration {
     public Step saveOnCvs(
             //ItemReader<Missione> leggiParametriReader
     ) {
-        return stepBuilderFactory.get(STEP_SALVA_DB)
+        return stepBuilderFactory.get(STEP_SALVA_CVS)
                 .<Missione,Missione>chunk(chunk_size)
                 .reader(leggiParametriReader(null,null, null,null))
                 .writer(writeCVSWriter())
@@ -208,8 +181,7 @@ public class HeroBatchConfiguration {
 
 
 
-    //TODO READER
-    //************************************  READER  ********************************************
+    // READER
     @Bean
     @StepScope
     public ItemReader<Missione> leggiParametriReader(@Value("#{jobParameters['nome_eroe']}") String hero,
@@ -221,13 +193,11 @@ public class HeroBatchConfiguration {
 
     }
 
-    //TODO PROCESSING
-    //************************************  PROCESSING  ****************************************
+    // PROCESSING
 
 
 
-    //TODO WRITER
-    //************************************  WRITER  ********************************************
+    // WRITER
     @Bean
     public ItemWriter<Missione> writeOnMySqlWriter() {
         return new JdbcBatchItemWriterBuilder<Missione>()

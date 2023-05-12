@@ -11,12 +11,13 @@ public class DecessoDecider implements JobExecutionDecider {
 
     private String decesso;
     public DecessoDecider(String decesso) {
+
         this.decesso=decesso;
     }
 
     @Override
     public FlowExecutionStatus decide(JobExecution jobExecution, StepExecution stepExecution) {
 
-        return Boolean.getBoolean(decesso) ? new FlowExecutionStatus(DECEDUTO) : new FlowExecutionStatus(NESSUN_DECESSO)  ;
+        return decesso == "true" ? new FlowExecutionStatus(DECEDUTO) : new FlowExecutionStatus(NESSUN_DECESSO)  ;
     }
 }
