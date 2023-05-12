@@ -70,6 +70,7 @@ public class HeroBatchConfiguration {
 
     @Autowired
     public DataSource dataSource;
+
     @Value("${file.path.generati}")
     private String path_file_generati;
 
