@@ -20,6 +20,8 @@ logging:
     it: debug
 #parametri file
 file:
+  path:
+      generati: C:\Users\Raddato\IdeaProjects\SuperHeroBatch\file_generati\
   nome:
     csv:
       deceduti: bollettino_di_guerra_del_{data}.csv
@@ -30,3 +32,4 @@ file:
 
 chunk:
   size: 1
+

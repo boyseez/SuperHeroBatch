@@ -7,6 +7,7 @@ import java.util.Objects;
 
 @Data
 @Builder
+
 public class Missione {
     public static final String KEY_NOME_EROE="nome_eroe";
     public static final String KEY_DETT_MISSIONE="dett_missione";
