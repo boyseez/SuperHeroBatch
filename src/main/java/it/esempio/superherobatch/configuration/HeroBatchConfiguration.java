@@ -59,6 +59,10 @@ public class HeroBatchConfiguration {
     @Value("${file.nome.json}")
     private String nomeJsonMissione;
 
+    @Value("${file.path.generati}")
+    private String path_file_generati;
+
+
     @Value("${file.intestazione.csv}")
     private String[] intestazioneCvs;
 
@@ -71,9 +75,6 @@ public class HeroBatchConfiguration {
 
     @Autowired
     public DataSource dataSource;
-
-    @Value("${file.path.generati}")
-    private String path_file_generati;
 
 
 
@@ -222,7 +223,7 @@ public class HeroBatchConfiguration {
     @Bean
     public ItemWriter<Missione> writeCVSWriter() {
         FlatFileItemWriter<Missione> itemWriter= new FlatFileItemWriter<>();
-        String[] fieldName = {     "nomeEroe","dettMissione","data","mortoEroe"};
+        String[] fieldName = {"nomeEroe","dettMissione","data","mortoEroe"};
 
         itemWriter.setHeaderCallback(writer -> {
             StringBuilder stringBuilder= new StringBuilder();
