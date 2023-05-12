@@ -1,11 +1,9 @@
 package it.esempio.superherobatch;
 
-import it.esempio.superherobatch.configuration.HeroBatchConfiguration;
 import it.esempio.superherobatch.model.Missione;
 import it.esempio.superherobatch.util.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.launch.JobLauncher;
@@ -15,9 +13,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
-import java.time.LocalDateTime;
 import java.util.Date;
-import java.util.Locale;
 
 @SpringBootApplication
 @Slf4j
